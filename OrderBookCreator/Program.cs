@@ -6,16 +6,16 @@ using OrderBookCreator.Models;
 
 public class OrderBook
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         var orderBook = new OrderBook();
 
-        orderBook.CreateOrderBookCsv();
+        await orderBook.CreateOrderBookCsv();
 
         Console.ReadKey();
     }
 
-    private void CreateOrderBookCsv()
+    private async Task CreateOrderBookCsv()
     {
         var sw = new Stopwatch();
 
@@ -36,14 +36,14 @@ public class OrderBook
         using (var reader = new StreamReader(File.OpenRead("../../../ticks.csv")))
         using (var csv = new CsvWriter(writer, config))
         {
-            string headerLine = reader.ReadLine();
-            writer.WriteLine($"{nameof(Tick.SourceTime)};{nameof(Tick.Side)};{nameof(Tick.Action)};{nameof(Tick.OrderId)};" +
+            string headerLine = await reader.ReadLineAsync();
+            await writer.WriteLineAsync($"{nameof(Tick.SourceTime)};{nameof(Tick.Side)};{nameof(Tick.Action)};{nameof(Tick.OrderId)};" +
                 $"{nameof(Tick.Price)};{nameof(Tick.Qty)};{nameof(Tick.B0)};{nameof(Tick.BQ0)};" + $"{nameof(Tick.BN0)};" +
                 $"{nameof(Tick.A0)};{nameof(Tick.AQ0)};{nameof(Tick.AN0)}");
 
             while (!reader.EndOfStream)
             {
-                var line = reader.ReadLine();
+                var line = await reader.ReadLineAsync();
                 var columns = line?.Split(";");
 
                 var tick = new Tick(
@@ -129,7 +129,7 @@ public class OrderBook
                 tick.AN0 = currentAN0;
 
                 csv.WriteRecord(tick);
-                csv.NextRecord();
+                await csv.NextRecordAsync();
             }
         }
 
