@@ -1,6 +1,6 @@
 ﻿namespace OrderBookCreator.Models
 {
-    public struct Tick
+    public class Tick
     {
         public long SourceTime { get; set; }
         public string Side { get; set; }
@@ -16,18 +16,12 @@
         public int? AN0 { get; set; }
 
         public Tick(
-            long sourceTime,
-            string side,
-            char action,
-            long orderId,
-            double price,
-            int qty,
-            double? b0,
-            int? bq0,
-            int? bn0,
-            double? a0,
-            int? aq0,
-            int? an0)
+        long sourceTime,
+        string side,
+        char action,
+        long orderId,
+        double price,
+        int qty)
         {
             SourceTime = sourceTime;
             Side = side;
@@ -35,12 +29,6 @@
             OrderId = orderId;
             Price = price;
             Qty = qty;
-            B0 = b0;
-            BQ0 = bq0;
-            BN0 = bn0;
-            A0 = a0;
-            AQ0 = aq0;
-            AN0 = an0;
         }
     }
 }
