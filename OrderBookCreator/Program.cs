@@ -30,16 +30,15 @@ public class OrderBook
         int? currentBQ0 = 0;
         int? currentBN0 = 0;
 
-        var config = new CsvConfiguration(CultureInfo.CurrentCulture) { Delimiter = ";" };
+        var config = new CsvConfiguration(CultureInfo.CurrentCulture) { Delimiter = ";", MissingFieldFound = null };
 
         using (var writer = new StreamWriter(File.OpenWrite("../../../ticks_result.csv")))
         using (var reader = new StreamReader(File.OpenRead("../../../ticks.csv")))
         using (var csv = new CsvWriter(writer, config))
         {
             string headerLine = reader.ReadLine();
-            writer.WriteLine($"{nameof(Tick.SourceTime)};{nameof(Tick.Side)};{nameof(Tick.Action)};{nameof(Tick.OrderId)};" +
-                $"{nameof(Tick.Price)};{nameof(Tick.Qty)};{nameof(Tick.B0)};{nameof(Tick.BQ0)};" + $"{nameof(Tick.BN0)};" +
-                $"{nameof(Tick.A0)};{nameof(Tick.AQ0)};{nameof(Tick.AN0)}");
+            csv.WriteHeader<Tick>();
+            csv.NextRecord();
 
             while (!reader.EndOfStream)
             {
