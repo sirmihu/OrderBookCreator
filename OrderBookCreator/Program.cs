@@ -20,7 +20,8 @@ public class OrderBook
 
     private void CreateOrderBookCsv()
     {
-        var ticks = new List<Tick>();
+        var bidTicks = new Dictionary<long, Tick>();
+        var askTicks = new Dictionary<long, Tick>();
         double? currentA0 = 0;
         int? currentAQ0 = 0;
         int? currentAN0 = 0;
@@ -28,13 +29,13 @@ public class OrderBook
         int? currentBQ0 = 0;
         int? currentBN0 = 0;
 
-        var sourceTicks = ReadCsv();
+        var ticks = ReadCsv();
 
         var sw = new Stopwatch();
         sw.Start();
         Console.WriteLine("*** Creation OrderBook process started ***");
 
-        foreach (var tick in sourceTicks)
+        foreach (var tick in ticks)
         {
             if (tick.Action == 'Y' || tick.Action == 'F')
             {
@@ -47,59 +48,66 @@ public class OrderBook
             }
             else if (tick.Action == 'A' && tick.Side == "1")
             {
-                ticks.Add(tick);
+                bidTicks.Add(tick.OrderId, tick);
 
                 if (tick.Price >= (currentB0 ?? 0))
                 {
                     currentB0 = tick.Price;
-                    currentBQ0 = ticks.Where(p => p.Price == currentB0 && p.Side == "1").Sum(p => p.Qty);
-                    currentBN0 = ticks.Count(p => p.Price == currentB0 && p.Side == "1");
+                    currentBQ0 = bidTicks.Where(p => p.Value.Price == currentB0).Sum(p => p.Value.Qty);
+                    currentBN0 = bidTicks.Count(p => p.Value.Price == currentB0);
                 }
             }
             else if (tick.Action == 'A' && tick.Side == "2")
             {
-                ticks.Add(tick);
+                askTicks.Add(tick.OrderId, tick);
 
                 if (tick.Price <= currentA0 || currentA0 == null)
                 {
                     currentA0 = tick.Price;
-                    currentAQ0 = ticks.Where(p => p.Price == currentA0 && p.Side == "2").Sum(p => p.Qty);
-                    currentAN0 = ticks.Count(p => p.Price == currentA0 && p.Side == "2");
+                    currentAQ0 = askTicks.Where(p => p.Value.Price == currentA0).Sum(p => p.Value.Qty);
+                    currentAN0 = askTicks.Count(p => p.Value.Price == currentA0);
                 }
             }
-            else if (tick.Action == 'M')
+            else if (tick.Action == 'M' && tick.Side == "1")
             {
-                ticks.RemoveAll(p => p.OrderId == tick.OrderId);
-                ticks.Add(tick);
+                if (bidTicks.ContainsKey(tick.OrderId))
+                    bidTicks[tick.OrderId] = tick;
+                else bidTicks.Add(tick.OrderId, tick);
 
-                if (tick.Side == "1")
+                currentB0 = bidTicks.Max(p => p.Value.Price);
+                currentBQ0 = bidTicks.Where(p => p.Value.Price == currentB0).Sum(p => p.Value.Qty);
+                currentBN0 = bidTicks.Count(p => p.Value.Price == currentB0);
+            }
+            else if (tick.Action == 'M' && tick.Side == "2")
+            {
+                if (askTicks.ContainsKey(tick.OrderId))
+                    askTicks[tick.OrderId] = tick;
+                else askTicks.Add(tick.OrderId, tick);
+
+                currentA0 = askTicks.Min(p => p.Value.Price);
+                currentAQ0 = askTicks.Where(p => p.Value.Price == currentA0).Sum(p => p.Value.Qty);
+                currentAN0 = askTicks.Count(p => p.Value.Price == currentA0);
+            }
+            else if (tick.Action == 'D' && tick.Side == "1")
+            {
+                var removedTick = bidTicks.Remove(tick.OrderId);
+
+                if (removedTick)
                 {
-                    currentB0 = ticks.Where(p => p.Side == "1").Max(p => p.Price);
-                    currentBQ0 = ticks.Where(p => p.Price == currentB0 && p.Side == "1").Sum(p => p.Qty);
-                    currentBN0 = ticks.Count(p => p.Price == currentB0 && p.Side == "1");
-                }
-                else if (tick.Side == "2")
-                {
-                    currentA0 = ticks.Where(p => p.Side == "2").Min(p => p.Price);
-                    currentAQ0 = ticks.Where(p => p.Price == currentA0 && p.Side == "2").Sum(p => p.Qty);
-                    currentAN0 = ticks.Count(p => p.Price == currentA0 && p.Side == "2");
+                    currentB0 = bidTicks.Max(p => p.Value.Price);
+                    currentBQ0 = bidTicks.Where(p => p.Value.Price == currentB0).Sum(p => p.Value.Qty);
+                    currentBN0 = bidTicks.Count(p => p.Value.Price == currentB0);
                 }
             }
-            else if (tick.Action == 'D')
+            else if (tick.Action == 'D' && tick.Side == "2")
             {
-                var numberOfTicksRemoved = ticks.RemoveAll(p => p.OrderId == tick.OrderId);
+                var removedTick = askTicks.Remove(tick.OrderId);
 
-                if (numberOfTicksRemoved > 0 && tick.Side == "1")
+                if (removedTick)
                 {
-                    currentB0 = ticks.Where(p => p.Side == "1").Max(p => p.Price);
-                    currentBQ0 = ticks.Where(p => p.Price == currentB0 && p.Side == "1").Sum(p => p.Qty);
-                    currentBN0 = ticks.Count(p => p.Price == currentB0 && p.Side == "1");
-                }
-                else if (numberOfTicksRemoved > 0 && tick.Side == "2")
-                {
-                    currentA0 = ticks.Where(p => p.Side == "2").Min(p => p.Price);
-                    currentAQ0 = ticks.Where(p => p.Price == currentA0 && p.Side == "2").Sum(p => p.Qty);
-                    currentAN0 = ticks.Count(p => p.Price == currentA0 && p.Side == "2");
+                    currentA0 = askTicks.Min(p => p.Value.Price);
+                    currentAQ0 = askTicks.Where(p => p.Value.Price == currentA0).Sum(p => p.Value.Qty);
+                    currentAN0 = askTicks.Count(p => p.Value.Price == currentA0);
                 }
             }
 
@@ -114,9 +122,9 @@ public class OrderBook
         sw.Stop();
         Console.WriteLine("*** Creation OrderBook process completed ***");
         Console.WriteLine($"Total time [us]: {sw.ElapsedMilliseconds * 1000.0:F3}");
-        Console.WriteLine($"Time per tick [us]: {sw.ElapsedMilliseconds * 1000.0 / ticks.Count:F3}");
+        Console.WriteLine($"Time per tick [us]: {sw.ElapsedMilliseconds * 1000.0 / (ticks.Count):F3}");
 
-        WriteCsv(sourceTicks);
+        WriteCsv(ticks);
     }
 
     private List<Tick> ReadCsv()
@@ -134,7 +142,7 @@ public class OrderBook
     {
         var config = new CsvConfiguration(CultureInfo.CurrentCulture) { Delimiter = ";" };
 
-        using (var writer = new StreamWriter("../../../ticks_result.csv"))
+        using (var writer = new StreamWriter("../../../ticks-result.csv"))
         using (var csv = new CsvWriter(writer, config))
         {
             csv.WriteRecords(ticks);
