@@ -1,4 +1,4 @@
-﻿namespace OrderBookCreator.Models
+namespace OrderBookCreator.Models
 {
     public class Tick
     {
@@ -15,18 +15,13 @@
         public int? AQ0 { get; set; }
         public int? AN0 { get; set; }
 
-        public Tick()
-        {
-
-        }
-
         public Tick(
-            long sourceTime,
-            string side,
-            char action,
-            long orderId,
-            double price,
-            int qty)
+        long sourceTime,
+        string side,
+        char action,
+        long orderId,
+        double price,
+        int qty)
         {
             SourceTime = sourceTime;
             Side = side;
