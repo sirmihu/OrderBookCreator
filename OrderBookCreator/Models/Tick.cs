@@ -15,6 +15,11 @@ namespace OrderBookCreator.Models
         public int? AQ0 { get; set; }
         public int? AN0 { get; set; }
 
+        public Tick()
+        {
+
+        }
+
         public Tick(
         long sourceTime,
         string side,
