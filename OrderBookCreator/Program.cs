@@ -8,20 +8,18 @@ public class OrderBook
 {
     static void Main(string[] args)
     {
-        var orderBook = new OrderBook();
+        for (int i = 0; i < 10; i++)
+        {
+            var orderBook = new OrderBook();
 
-        orderBook.CreateOrderBookCsv();
+            orderBook.CreateOrderBookCsv();
+        }
 
         Console.ReadKey();
     }
 
     private void CreateOrderBookCsv()
     {
-        var sw = new Stopwatch();
-
-        sw.Start();
-        Console.WriteLine("*** Creation OrderBook process started ***");
-
         var ticks = new List<Tick>();
         double? currentA0 = 0;
         int? currentAQ0 = 0;
@@ -31,6 +29,10 @@ public class OrderBook
         int? currentBN0 = 0;
 
         var sourceTicks = ReadCsv();
+
+        var sw = new Stopwatch();
+        sw.Start();
+        Console.WriteLine("*** Creation OrderBook process started ***");
 
         foreach (var tick in sourceTicks)
         {
@@ -109,17 +111,17 @@ public class OrderBook
             tick.AN0 = currentAN0;
         }
 
-        WriteCsv(sourceTicks);
-
         sw.Stop();
         Console.WriteLine("*** Creation OrderBook process completed ***");
         Console.WriteLine($"Total time [us]: {sw.ElapsedMilliseconds * 1000.0:F3}");
         Console.WriteLine($"Time per tick [us]: {sw.ElapsedMilliseconds * 1000.0 / ticks.Count:F3}");
+
+        WriteCsv(sourceTicks);
     }
 
     private List<Tick> ReadCsv()
     {
-        var config = new CsvConfiguration(CultureInfo.CurrentCulture) { Delimiter = ";", MissingFieldFound = null};
+        var config = new CsvConfiguration(CultureInfo.CurrentCulture) { Delimiter = ";", MissingFieldFound = null };
 
         using (var reader = new StreamReader(File.OpenRead("../../../ticks.csv")))
         using (var csv = new CsvReader(reader, config))
