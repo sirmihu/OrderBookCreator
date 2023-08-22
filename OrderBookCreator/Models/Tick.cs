@@ -1,4 +1,4 @@
-﻿namespace OrderBookCreator.Models
+namespace OrderBookCreator.Models
 {
     public class Tick
     {
