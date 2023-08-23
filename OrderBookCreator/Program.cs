@@ -140,34 +140,47 @@ public class OrderBook
             }
             else if (tick.Action == 'D' && tick.Side == "1")
             {
-                var removedTick = bidTicks.Remove(tick.OrderId);
+                if (bidTicks.ContainsKey(tick.OrderId))
+                {
+                    var removedTick = bidTicks[tick.OrderId];
+                    bidTicks.Remove(tick.OrderId);
 
-                if (removedTick && tick.Price == currentB0 && currentBN0 > 1)
-                {
-                    currentBQ0 -= tick.Qty;
-                    currentBN0--;
-                }
-                else if (removedTick && tick.Price == currentB0)
-                {
-                    currentB0 = bidTicks.Max(p => p.Value.Price);
-                    currentBQ0 = bidTicks.Where(p => p.Value.Price == currentB0).Sum(p => p.Value.Qty);
-                    currentBN0 = bidTicks.Count(p => p.Value.Price == currentB0);
+                    if (tick.Price == currentB0 && currentBN0 > 1)
+                    {
+                        currentBQ0 -= removedTick.Qty;
+                        currentBN0--;
+                    }
+
+                    else if (tick.Price == currentB0)
+                    {
+                        currentB0 = bidTicks.Max(p => p.Value.Price);
+                        currentBQ0 = bidTicks.Where(p => p.Value.Price == currentB0).Sum(p => p.Value.Qty);
+                        currentBN0 = bidTicks.Count(p => p.Value.Price == currentB0);
+                    }
+
                 }
             }
+
             else if (tick.Action == 'D' && tick.Side == "2")
             {
-                var removedTick = askTicks.Remove(tick.OrderId);
+                if (askTicks.ContainsKey(tick.OrderId))
+                {
+                    var removedTick = askTicks[tick.OrderId];
+                    askTicks.Remove(tick.OrderId);
 
-                if (removedTick && tick.Price == currentA0 && currentAN0 > 1)
-                {
-                    currentAQ0 -= tick.Qty;
-                    currentAN0--;
-                }
-                else if (removedTick && tick.Price == currentA0)
-                {
-                    currentA0 = askTicks.Min(p => p.Value.Price);
-                    currentAQ0 = askTicks.Where(p => p.Value.Price == currentA0).Sum(p => p.Value.Qty);
-                    currentAN0 = askTicks.Count(p => p.Value.Price == currentA0);
+                    if (tick.Price == currentA0 && currentAN0 > 1)
+                    {
+                        currentAQ0 -= removedTick.Qty;
+                        currentAN0--;
+                    }
+
+                    else if (tick.Price == currentA0)
+                    {
+                        currentA0 = askTicks.Min(p => p.Value.Price);
+                        currentAQ0 = askTicks.Where(p => p.Value.Price == currentA0).Sum(p => p.Value.Qty);
+                        currentAN0 = askTicks.Count(p => p.Value.Price == currentA0);
+                    }
+
                 }
             }
 
