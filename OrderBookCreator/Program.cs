@@ -50,49 +50,104 @@ public class OrderBook
             {
                 bidTicks.Add(tick.OrderId, tick);
 
-                if (tick.Price >= (currentB0 ?? 0))
+                if (tick.Price == currentB0)
+                {
+                    currentBQ0 += tick.Qty;
+                    currentBN0++;
+                }
+                else if (tick.Price > currentB0 || currentB0 == null)
                 {
                     currentB0 = tick.Price;
-                    currentBQ0 = bidTicks.Where(p => p.Value.Price == currentB0).Sum(p => p.Value.Qty);
-                    currentBN0 = bidTicks.Count(p => p.Value.Price == currentB0);
+                    currentBQ0 = tick.Qty;
+                    currentBN0 = 1;
                 }
             }
             else if (tick.Action == 'A' && tick.Side == "2")
             {
                 askTicks.Add(tick.OrderId, tick);
 
-                if (tick.Price <= currentA0 || currentA0 == null)
+                if (tick.Price == currentA0)
+                {
+                    currentAQ0 += tick.Qty;
+                    currentAN0++;
+                }
+                else if (tick.Price < currentA0 || currentA0 == null)
                 {
                     currentA0 = tick.Price;
-                    currentAQ0 = askTicks.Where(p => p.Value.Price == currentA0).Sum(p => p.Value.Qty);
-                    currentAN0 = askTicks.Count(p => p.Value.Price == currentA0);
+                    currentAQ0 = tick.Qty;
+                    currentAN0 = 1;
                 }
             }
             else if (tick.Action == 'M' && tick.Side == "1")
             {
                 if (bidTicks.ContainsKey(tick.OrderId))
+                {
+                    var modifiedTick = bidTicks[tick.OrderId];
                     bidTicks[tick.OrderId] = tick;
-                else bidTicks.Add(tick.OrderId, tick);
 
-                currentB0 = bidTicks.Max(p => p.Value.Price);
-                currentBQ0 = bidTicks.Where(p => p.Value.Price == currentB0).Sum(p => p.Value.Qty);
-                currentBN0 = bidTicks.Count(p => p.Value.Price == currentB0);
+                    if (tick.Price == currentB0)
+                    {
+                        currentBQ0 += tick.Qty - modifiedTick.Qty;
+                    }
+                }
+                else
+                {
+                    bidTicks.Add(tick.OrderId, tick);
+
+                    if (tick.Price == currentB0)
+                    {
+                        currentBQ0 += tick.Qty;
+                        currentBN0++;
+                    }
+                }
+
+                if (tick.Price > currentB0 || currentB0 == null)
+                {
+                    currentB0 = tick.Price;
+                    currentBQ0 = tick.Qty;
+                    currentBN0 = 1;
+                }
             }
             else if (tick.Action == 'M' && tick.Side == "2")
             {
                 if (askTicks.ContainsKey(tick.OrderId))
+                {
+                    var modifiedTick = askTicks[tick.OrderId];
                     askTicks[tick.OrderId] = tick;
-                else askTicks.Add(tick.OrderId, tick);
 
-                currentA0 = askTicks.Min(p => p.Value.Price);
-                currentAQ0 = askTicks.Where(p => p.Value.Price == currentA0).Sum(p => p.Value.Qty);
-                currentAN0 = askTicks.Count(p => p.Value.Price == currentA0);
+                    if (tick.Price == currentA0)
+                    {
+                        currentAQ0 += tick.Qty - modifiedTick.Qty;
+                    }
+                }
+                else
+                {
+                    askTicks.Add(tick.OrderId, tick);
+
+                    if (tick.Price == currentA0)
+                    {
+                        currentAQ0 += tick.Qty;
+                        currentAN0++;
+                    }
+                }
+
+                if (tick.Price < currentA0 || currentA0 == null)
+                {
+                    currentA0 = tick.Price;
+                    currentAQ0 = tick.Qty;
+                    currentAN0 = 1;
+                }
             }
             else if (tick.Action == 'D' && tick.Side == "1")
             {
                 var removedTick = bidTicks.Remove(tick.OrderId);
 
-                if (removedTick)
+                if (removedTick && tick.Price == currentB0 && currentBN0 > 1)
+                {
+                    currentBQ0 -= tick.Qty;
+                    currentBN0--;
+                }
+                else if (removedTick && tick.Price == currentB0)
                 {
                     currentB0 = bidTicks.Max(p => p.Value.Price);
                     currentBQ0 = bidTicks.Where(p => p.Value.Price == currentB0).Sum(p => p.Value.Qty);
@@ -103,7 +158,12 @@ public class OrderBook
             {
                 var removedTick = askTicks.Remove(tick.OrderId);
 
-                if (removedTick)
+                if (removedTick && tick.Price == currentA0 && currentAN0 > 1)
+                {
+                    currentAQ0 -= tick.Qty;
+                    currentAN0--;
+                }
+                else if (removedTick && tick.Price == currentA0)
                 {
                     currentA0 = askTicks.Min(p => p.Value.Price);
                     currentAQ0 = askTicks.Where(p => p.Value.Price == currentA0).Sum(p => p.Value.Qty);
@@ -142,7 +202,7 @@ public class OrderBook
     {
         var config = new CsvConfiguration(CultureInfo.CurrentCulture) { Delimiter = ";" };
 
-        using (var writer = new StreamWriter("../../../ticks-result.csv"))
+        using (var writer = new StreamWriter("../../../ticks_result.csv"))
         using (var csv = new CsvWriter(writer, config))
         {
             csv.WriteRecords(ticks);
